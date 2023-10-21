@@ -4,7 +4,8 @@ from tkinter import ttk
 from tkinter import filedialog
 
 class GUIManager:
-    def __init__(self, controller):
+    def __init__(self, window, controller):
+        self.window = window
         self.camera_controller = controller
         self.apply_detect = False
         self.apply_DispFeature = False
@@ -12,11 +13,15 @@ class GUIManager:
         self.current_image = None
         self.auto_exposure_var = tk.IntVar(value=1)
         self.auto_wh_var = tk.IntVar(value=1) 
-        self.auto_focus_var = tk.IntVar(value=1)     
+        self.auto_focus_var = tk.IntVar(value=1)
+        self.createCanvas()
+        self.createButtons()
+        
     
-    def createCanvas(self, window, widthVal, heightVal):
-        self.window = window
-        self.canvas = tk.Canvas(self.window, width=widthVal, height=heightVal)
+    def createCanvas(self):
+        self.canvas = tk.Canvas(self.window, 
+                                width=self.camera_controller.vid.get(cv2.CAP_PROP_FRAME_WIDTH), 
+                                height=self.camera_controller.vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
         self.canvas.pack()
     
     def createButtons(self):

@@ -23,12 +23,8 @@ class MainWindow:
         self.ImgProc = ImageProcessor()
         
         # TKinterなどの部品を制御するクラス
-        self.GUIManager = GUIManager(self.camera_controller)
-        self.GUIManager.createCanvas(self.window, 
-                                     self.camera_controller.vid.get(cv2.CAP_PROP_FRAME_WIDTH),
-                                     self.camera_controller.vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        self.GUIManager.createButtons()
-        
+        self.GUIManager = GUIManager(self.window, self.camera_controller)
+       
 
     def update(self):
         ret, frame = self.camera_controller.get_Frame()
