@@ -5,6 +5,9 @@ class ImageProcessor:
     # def __init__(self):
         
     def display_feature_points(self, frame):
+        
+        # TODO 引数のAlgoで検知方式を呼び分ける。
+        
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         sift = cv2.SIFT_create()
         kp = sift.detect(gray, None)
@@ -12,6 +15,13 @@ class ImageProcessor:
         return frame
     
     def detect_object(self, frame, reference_image_path):
+        
+        # TODO 引数のAlgoで検知方式を呼び分ける。
+        return self.detectBySIFT(frame, reference_image_path)
+    
+    # SIFTアルゴリズムによる物体検知。（TODO　Algo毎にクラス化）
+    def detectBySIFT(self, frame, reference_image_path):
+        
         # 比較対象画像読み込み(グレースケール)
         reference_image = cv2.imread(reference_image_path, 0)
         # SIFT検出器初期化
@@ -53,3 +63,4 @@ class ImageProcessor:
             frame = cv2.polylines(frame, [np.int32(dst)], True, (0, 255, 0), 3, cv2.LINE_AA)
         
         return frame
+        
