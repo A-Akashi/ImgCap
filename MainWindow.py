@@ -18,12 +18,12 @@ class MainWindow:
     def setUp(self):
         # カメラ制御クラス
         self.camera_controller = CameraController()
-        
-        # 画像処理クラス
-        self.ImgProc = ImageProcessor()
-        
+               
         # TKinterなどの部品を制御するクラス
         self.GUIManager = GUIManager(self.window, self.camera_controller)
+        
+        # 画像処理クラス
+        self.ImgProc = ImageProcessor(self.GUIManager)
        
 
     def update(self):
@@ -42,12 +42,11 @@ class MainWindow:
     def exec_Img_Proc(self, frame):
         # 特徴点表示設定時。
         if self.GUIManager.apply_DispFeature:
-            frame = self.ImgProc.display_feature_points(frame)
+            return self.ImgProc.display_feature_points(frame)
             
         # 物体検知設定時。
         if self.GUIManager.apply_detect and self.GUIManager.reference_image_path:
-            frame = self.ImgProc.detect_object(frame, self.GUIManager.reference_image_path)
-
+             return self.ImgProc.detect_object(frame)
         return frame
 
     def __del__(self):
