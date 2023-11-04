@@ -68,10 +68,76 @@ class ImageProcessor:
             dst = cv2.perspectiveTransform(pts, M)
             # 矩形描画。
             frame = cv2.polylines(frame, [np.int32(dst)], True, (0, 255, 0), 3, cv2.LINE_AA)
-        
         return frame
         
 
+    def calculate_edges_and_gradients(image):
+        # Cannyによるエッジ検出
+        edges = cv2.Canny(image, 50, 150)
+        # 勾配計算
+        grad_x = cv2.Sobel(image, cv2.CV_64F, 1, 0, ksize=5)
+        grad_y = cv2.Sobel(image, cv2.CV_64F, 0, 1, ksize=5)
+        # 勾配の距離と角度の算出
+        magnitude, angle = cv2.cartToPolar(grad_x, grad_y, angleInDegrees=True)
+        return edges, magnitude, angle
+
+    def create_r_table(edges, angles):
+        r_table = {}
+        edge_points = np.argwhere(edges > 0)
+        reference_point = (edges.shape[1] // 2, edges.shape[0] // 2)
+        for point in edge_points:
+            relative_position = (reference_point[0] - point[1], reference_point[1] - point[0])
+            angle = int(np.rad2deg(angles[point[0], point[1]]))
+            if angle not in r_table:
+                r_table[angle] = []
+            r_table[angle].append(relative_position)
+        return r_table
+
+    
+    def create_accumulator(edges, angles, r_table, angle_resolution=1):
+        accumulator = np.zeros(edges.shape, dtype=np.int32)
+        edge_points = np.argwhere(edges > 0)
+        for point in edge_points:
+            gradient_angle = int(np.rad2deg(angles[point[0], point[1]])) // angle_resolution
+            if gradient_angle in r_table:
+                for r_vector in r_table[gradient_angle]:
+                    center_y = point[0] + r_vector[1]
+                    center_x = point[1] + r_vector[0]
+                    if 0 <= center_x < accumulator.shape[1] and 0 <= center_y < accumulator.shape[0]:
+                        accumulator[center_y, center_x] += 1
+        return accumulator
+
+
+    def detectByCanny(self, frame, reference_image_path):
+        # 比較対象画像読み込み(グレースケール)、Cannyによるエッジ検出。
+        reference_image = cv2.imread(reference_image_path, cv2.IMREAD_GRAYSCALE)
+        reference_edges, _, reference_angles = self.calculate_edges_and_gradients(reference_image)
+        
+        # 比較対象画像の読み込み失敗時は何もしない。
+        if reference_edges.shape[0] > frame_edges.shape[0] or reference_edges.shape[1] > frame_edges.shape[1]:
+            return frame
+        
+        # Rテーブル作成
+        r_table = self.create_r_table(reference_edges, reference_angles)
+        
+        # カメラフレーム画像読み込み(グレースケール)、Cannyによるエッジ検出。
+        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        frame_edges, _, frame_angles = self.calculate_edges_and_gradients(gray_frame)
+
+        # アキュムレータ作成
+        accumulator = self.create_accumulator(frame_edges, frame_angles, r_table)
+        _, max_val, _, max_loc = cv2.minMaxLoc(accumulator)
+        # 一致点が閾値以上あればカメラ映像の対象物に矩形を描画。
+        if max_val > 0.4:
+            object_height, object_width = reference_image.shape[:2]
+            top_left = (max_loc[0] - object_width // 2, max_loc[1] - object_height // 2)
+            bottom_right = (top_left[0] + object_width, top_left[1] + object_height)
+            cv2.rectangle(frame, top_left, bottom_right, (0, 255, 0), 2)
+        return frame
+
+
+    """
+    比較画像との単純なテンプレートマッチング
     def detectByCanny(self, frame, reference_image_path):
         # 比較対象画像読み込み(グレースケール)、Cannyによるエッジ検出。
         reference_image = cv2.imread(reference_image_path, cv2.IMREAD_GRAYSCALE)
@@ -96,3 +162,4 @@ class ImageProcessor:
             cv2.rectangle(frame, top_left, bottom_right, (0, 255, 0), 2)
 
         return frame
+    """
