@@ -71,7 +71,7 @@ class ImageProcessor:
         return frame
         
 
-    def calculate_edges_and_gradients(image):
+    def calculate_edges_and_gradients(self, image):
         # Cannyによるエッジ検出
         edges = cv2.Canny(image, 50, 150)
         # 勾配計算
@@ -81,7 +81,7 @@ class ImageProcessor:
         magnitude, angle = cv2.cartToPolar(grad_x, grad_y, angleInDegrees=True)
         return edges, magnitude, angle
 
-    def create_r_table(edges, angles):
+    def create_r_table(self, edges, angles):
         r_table = {}
         edge_points = np.argwhere(edges > 0)
         reference_point = (edges.shape[1] // 2, edges.shape[0] // 2)
@@ -94,7 +94,7 @@ class ImageProcessor:
         return r_table
 
     
-    def create_accumulator(edges, angles, r_table, angle_resolution=1):
+    def create_accumulator(self, edges, angles, r_table, angle_resolution=1):
         accumulator = np.zeros(edges.shape, dtype=np.int32)
         edge_points = np.argwhere(edges > 0)
         for point in edge_points:
@@ -112,6 +112,10 @@ class ImageProcessor:
         # 比較対象画像読み込み(グレースケール)、Cannyによるエッジ検出。
         reference_image = cv2.imread(reference_image_path, cv2.IMREAD_GRAYSCALE)
         reference_edges, _, reference_angles = self.calculate_edges_and_gradients(reference_image)
+
+        # カメラフレーム画像読み込み(グレースケール)、Cannyによるエッジ検出。
+        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        frame_edges, _, frame_angles = self.calculate_edges_and_gradients(gray_frame)
         
         # 比較対象画像の読み込み失敗時は何もしない。
         if reference_edges.shape[0] > frame_edges.shape[0] or reference_edges.shape[1] > frame_edges.shape[1]:
@@ -120,10 +124,6 @@ class ImageProcessor:
         # Rテーブル作成
         r_table = self.create_r_table(reference_edges, reference_angles)
         
-        # カメラフレーム画像読み込み(グレースケール)、Cannyによるエッジ検出。
-        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        frame_edges, _, frame_angles = self.calculate_edges_and_gradients(gray_frame)
-
         # アキュムレータ作成
         accumulator = self.create_accumulator(frame_edges, frame_angles, r_table)
         _, max_val, _, max_loc = cv2.minMaxLoc(accumulator)
