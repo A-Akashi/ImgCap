@@ -45,7 +45,7 @@ class MainWindow:
             return self.ImgProc.display_feature_points(frame)
             
         # 物体検知設定時。
-        if self.GUIManager.apply_detect and self.GUIManager.reference_image_path:
+        if self.GUIManager.apply_detect:
              return self.ImgProc.detect_object(frame)
         return frame
 
