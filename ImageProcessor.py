@@ -26,6 +26,8 @@ class ImageProcessor:
             frame = self.detectByCanny(frame, self.GUIManager.reference_image_path)
         elif self.GUIManager.algorithm_combobox.get() == "Cascade(Face)":
             frame = self.detectByCascadeFace(frame)
+        elif self.GUIManager.algorithm_combobox.get() == "Cascade(PushPin)":
+            frame = self.detectByCascadePushPin(frame)
         return frame
     
     # SIFTアルゴリズムによる物体検知。（TODO　Algo毎にクラス化）
@@ -54,7 +56,8 @@ class ImageProcessor:
         # Loweの比率テストに基づいた特徴点マッチング。
         good_matches = []
         for m, n in matches:
-            if m.distance < 0.7 * n.distance:
+            print(f"m.distance : {m.distance}, n.distance : {n.distance}, 0.9 * n.distance : {0.9 * n.distance}")
+            if m.distance < 0.8 * n.distance:
                 good_matches.append(m)
         
         # 十分な特徴点が得られた場合、カメラ映像の対象物に矩形を描画。
@@ -179,6 +182,22 @@ class ImageProcessor:
         cascade = cv2.CascadeClassifier("./data/cascade/haarcascade_frontalface_default.xml")
         # 顔を検出する
         lists = cascade.detectMultiScale(gray_frame, minSize=(100, 100))
+        if len(lists):
+            # 顔を検出した場合、forですべての顔を赤い長方形で囲む
+            for (x,y,w,h) in lists:
+                cv2.rectangle(frame, (x,y), (x+w, y+h), (0, 255, 0), thickness=2)
+        return frame
+    
+    """
+    Cascade分類器(画鋲)を使用した検出
+    """
+    def detectByCascadePushPin(self, frame):
+        # カメラフレーム画像読み込み(グレースケール)
+        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)       
+        # 学習済み顔認識モデルの読み込み
+        cascade = cv2.CascadeClassifier("./data/cascade/cascade_pushpin.xml")
+        # 顔を検出する
+        lists = cascade.detectMultiScale(gray_frame, minSize=(200, 200))
         if len(lists):
             # 顔を検出した場合、forですべての顔を赤い長方形で囲む
             for (x,y,w,h) in lists:
