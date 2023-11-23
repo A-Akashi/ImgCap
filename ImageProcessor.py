@@ -14,8 +14,7 @@ class ImageProcessor:
             frame = cv2.drawKeypoints(frame, kp, frame)  
         elif self.GUIManager.algorithm_combobox.get() == "Canny":
             # Canny
-            frame = cv2.Canny(frame, 50, 150)
-        
+            frame = cv2.Canny(frame, 50, 150)       
         return frame
     
     def detect_object(self, frame):
@@ -28,6 +27,8 @@ class ImageProcessor:
             frame = self.detectByCascadeFace(frame)
         elif self.GUIManager.algorithm_combobox.get() == "Cascade(PushPin)":
             frame = self.detectByCascadePushPin(frame)
+        elif self.GUIManager.algorithm_combobox.get() == "findContours":
+            frame = self.detectByfindContours(frame)
         return frame
     
     # SIFTアルゴリズムによる物体検知。（TODO　Algo毎にクラス化）
@@ -201,4 +202,23 @@ class ImageProcessor:
             # 画鋲を検出した場合、forですべての画鋲を緑色の長方形で囲む
             for (x,y,w,h) in lists:
                 cv2.rectangle(frame, (x,y), (x+w, y+h), (0, 255, 0), thickness=2)
+        return frame
+    
+    
+    """
+    findContoursを使用した輪郭検出
+    """
+    def detectByfindContours(self, frame):
+        # カメラフレーム画像読み込み(グレースケール)
+        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)    
+        
+        # 二値化
+        _, threshold = cv2.threshold(gray_frame, 127, 255, cv2.THRESH_BINARY)
+
+        # 輪郭の検出
+        _, contours, _ = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+        # 輪郭に緑色の枠を描画
+        for contour in contours:
+            cv2.drawContours(frame, [contour], -1, (0, 255, 0), 3)
         return frame

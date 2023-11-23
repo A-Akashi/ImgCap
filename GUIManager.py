@@ -118,7 +118,7 @@ class GUIManager:
         
         self.lbl_algorithm = tk.Label(self.algo_frame, text="Detection Algorithm : ", width=20 ,anchor="e")
         self.lbl_algorithm.pack(side=tk.LEFT)
-        self.algorithm_combobox = ttk.Combobox(self.algo_frame, values=["SIFT", "Canny", "Cascade(Face)", "Cascade(PushPin)"])
+        self.algorithm_combobox = ttk.Combobox(self.algo_frame, values=["SIFT", "Canny", "Cascade(Face)", "Cascade(PushPin)", "findContours"])
         self.algorithm_combobox.set("SIFT")  # 初期値
         self.algorithm_combobox.pack(side=tk.LEFT, padx=5)
         
