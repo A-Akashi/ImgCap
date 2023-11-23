@@ -132,6 +132,16 @@ class GUIManager:
         self.btn_select_Image = tk.Button(self.SelectImg_frame, text="Select Image", width=10, command=self.select_image)
         self.btn_select_Image.pack(side=tk.LEFT, padx=5)
         
+        # 閾値を調整するためのスライダーを作成
+        self.scale_frame = tk.Frame(settings_dialog)
+        self.scale_frame.pack(pady=10, anchor=tk.W)        
+        self.lbl_Threshold = tk.Label(self.scale_frame, text="Binarization Threshold : ", width=20 ,anchor="e")
+        self.lbl_Threshold.pack(side=tk.LEFT)
+        self.threshold_scale = tk.Scale(self.scale_frame, from_=0, to=255, orient="horizontal")
+        self.threshold_scale.set(127)  # デフォルトの閾値を設定
+        self.threshold_scale.pack(side=tk.LEFT, padx=5)
+        
+        
 
     # 自動露光設定。
     def set_auto_exposure_on(self):

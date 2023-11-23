@@ -213,7 +213,7 @@ class ImageProcessor:
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)    
         
         # 二値化
-        _, threshold = cv2.threshold(gray_frame, 127, 255, cv2.THRESH_BINARY)
+        _, threshold = cv2.threshold(gray_frame, self.GUIManager.threshold_scale.get(), 255, cv2.THRESH_BINARY)
 
         # 輪郭の検出
         _, contours, _ = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
