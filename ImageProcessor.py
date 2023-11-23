@@ -56,7 +56,6 @@ class ImageProcessor:
         # Loweの比率テストに基づいた特徴点マッチング。
         good_matches = []
         for m, n in matches:
-            print(f"m.distance : {m.distance}, n.distance : {n.distance}, 0.9 * n.distance : {0.9 * n.distance}")
             if m.distance < 0.8 * n.distance:
                 good_matches.append(m)
         
@@ -194,12 +193,12 @@ class ImageProcessor:
     def detectByCascadePushPin(self, frame):
         # カメラフレーム画像読み込み(グレースケール)
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)       
-        # 学習済み顔認識モデルの読み込み
+        # 学習済み画鋲認識モデルの読み込み
         cascade = cv2.CascadeClassifier("./data/cascade/cascade_pushpin.xml")
-        # 顔を検出する
+        # 画鋲を検出する
         lists = cascade.detectMultiScale(gray_frame, minSize=(200, 200))
         if len(lists):
-            # 顔を検出した場合、forですべての顔を赤い長方形で囲む
+            # 画鋲を検出した場合、forですべての画鋲を緑色の長方形で囲む
             for (x,y,w,h) in lists:
                 cv2.rectangle(frame, (x,y), (x+w, y+h), (0, 255, 0), thickness=2)
         return frame
