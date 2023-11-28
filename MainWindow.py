@@ -12,7 +12,7 @@ class MainWindow:
         self.window = window
         self.window.title(window_title)
         self.setUp()
-        self.update()
+        self.update()    
         self.window.mainloop()
 
     def setUp(self):

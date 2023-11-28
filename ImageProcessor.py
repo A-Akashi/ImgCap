@@ -26,7 +26,8 @@ class ImageProcessor:
         elif self.GUIManager.algorithm_combobox.get() == "Cascade(Face)":
             frame = self.detectByCascadeFace(frame)
         elif self.GUIManager.algorithm_combobox.get() == "Cascade(PushPin)":
-            frame = self.detectByCascadePushPin(frame)
+            #frame = self.detectByCascadePushPin(frame)
+            frame = self.detectByCascadePushPinContours(frame)     
         elif self.GUIManager.algorithm_combobox.get() == "findContours":
             frame = self.detectByfindContours(frame)
         return frame
@@ -192,18 +193,48 @@ class ImageProcessor:
     Cascade分類器(画鋲)を使用した検出
     """
     def detectByCascadePushPin(self, frame):
+        
         # カメラフレーム画像読み込み(グレースケール)
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)       
         # 学習済み画鋲認識モデルの読み込み
         cascade = cv2.CascadeClassifier("./data/cascade/cascade_pushpin.xml")
         # 画鋲を検出する
-        lists = cascade.detectMultiScale(gray_frame, minSize=(200, 200))
+        lists = cascade.detectMultiScale(gray_frame, minSize=(50, 50))
         if len(lists):
             # 画鋲を検出した場合、forですべての画鋲を緑色の長方形で囲む
             for (x,y,w,h) in lists:
                 cv2.rectangle(frame, (x,y), (x+w, y+h), (0, 255, 0), thickness=2)
-        return frame
+        return frame       
     
+            
+
+    """
+    Cascade分類器(画鋲)を使用した検出
+    """
+    def detectByCascadePushPinContours(self, frame):
+        # 輪郭を検出して領域を取得
+        regions = self.getContoursArea(frame)
+    
+        # 学習済み画鋲認識モデルの読み込み
+        cascade = cv2.CascadeClassifier("./data/cascade/cascade_pushpin.xml")
+        
+        # カメラフレーム画像読み込み(グレースケール)
+        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  
+        
+        # 指定された各領域に対してCascade分類器を適用
+        for (x, y, w, h) in regions:
+            # 指定された領域のみを対象に検出を実行
+            region_gray = frame[y:y+h, x:x+w]
+            lists = cascade.detectMultiScale(region_gray, scaleFactor=1.1, minNeighbors=3)
+
+            # Listsで最も大きいもののみ表示する。
+            
+            
+            # 検出された物体を緑色の長方形で囲む
+            for (rx, ry, rw, rh) in lists:
+                cv2.rectangle(frame, (x + rx, y + ry), (x + rx + rw, y + ry + rh), (0, 255, 0), thickness=2)
+
+        return frame  
     
     """
     findContoursを使用した輪郭検出
@@ -222,3 +253,39 @@ class ImageProcessor:
         for contour in contours:
             cv2.drawContours(frame, [contour], -1, (0, 255, 0), 3)
         return frame
+    
+    
+    
+    def getContoursArea(self, frame):
+        # カメラフレーム画像読み込み(グレースケール)
+        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+        # 二値化
+        _, threshold = cv2.threshold(gray_frame, self.GUIManager.threshold_scale.get(), 255, cv2.THRESH_BINARY)
+
+        # 輪郭の検出
+        _, contours, _ = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+        # 拡張するピクセル数
+        expansion_pixels = 100  # 周辺100ピクセルに設定
+
+        # 検出した輪郭の外接矩形を格納するリスト
+        bounding_rects = []
+
+        for contour in contours:
+            area = cv2.contourArea(contour)
+            if area > 200:
+                
+                # 外接矩形の取得
+                x, y, w, h = cv2.boundingRect(contour)
+
+                # 矩形の座標を調整して拡張
+                x_expanded = max(0, x - expansion_pixels)
+                y_expanded = max(0, y - expansion_pixels)
+                w_expanded = w + 2 * expansion_pixels
+                h_expanded = h + 2 * expansion_pixels
+
+                # 拡張した矩形をリストに追加
+                bounding_rects.append((x_expanded, y_expanded, w_expanded, h_expanded))
+        print(len(bounding_rects))
+        return bounding_rects
