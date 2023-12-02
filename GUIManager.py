@@ -132,7 +132,7 @@ class GUIManager:
         self.btn_select_Image = tk.Button(self.SelectImg_frame, text="Select Image", width=10, command=self.select_image)
         self.btn_select_Image.pack(side=tk.LEFT, padx=5)
         
-        # 閾値を調整するためのスライダーを作成
+        # 二値化閾値を調整するためのスライダーを作成
         self.scale_frame = tk.Frame(settings_dialog)
         self.scale_frame.pack(pady=10, anchor=tk.W)        
         self.lbl_Threshold = tk.Label(self.scale_frame, text="Binarization Threshold : ", width=20 ,anchor="e")
@@ -140,6 +140,36 @@ class GUIManager:
         self.threshold_scale = tk.Scale(self.scale_frame, from_=0, to=255, orient="horizontal")
         self.threshold_scale.set(127)  # デフォルトの閾値を設定
         self.threshold_scale.pack(side=tk.LEFT, padx=5)
+        
+         # Cascade分類器の設定項目
+        self.cascadeSetting_frame = tk.Frame(settings_dialog)
+        self.cascadeSetting_frame.pack(pady=10, anchor=tk.W)  
+        self.lbl_CascadeSetting= tk.Label(self.cascadeSetting_frame, text="CascadeClassifier Settings ==================", width=42 ,anchor="e")
+        self.lbl_CascadeSetting.pack(side=tk.LEFT)
+ 
+         # scaleFactor設定
+        self.scaleFactor_frame = tk.Frame(settings_dialog)
+        self.scaleFactor_frame.pack(pady=10, anchor=tk.W)        
+        self.lbl_scaleFactor = tk.Label(self.scaleFactor_frame, text="scaleFactor : ", width=20 ,anchor="e")
+        self.lbl_scaleFactor.pack(side=tk.LEFT)
+        self.sfEntry = tk.Entry(self.scaleFactor_frame, width=12)
+        self.sfEntry.pack(side=tk.LEFT, padx=5)  
+        self.sfEntry.insert(0, "1.1") #初期値。
+        self.lbl_scaleFactorRange = tk.Label(self.scaleFactor_frame, text="[1.1 - 1.5]", width=8 ,anchor="e")
+        self.lbl_scaleFactorRange.pack(side=tk.LEFT)
+        
+         # minNeighbors設定
+        self.minNeighbors_frame = tk.Frame(settings_dialog)
+        self.minNeighbors_frame.pack(pady=10, anchor=tk.W)        
+        self.lbl_minNeighbors = tk.Label(self.minNeighbors_frame, text="minNeighbors : ", width=20 ,anchor="e")
+        self.lbl_minNeighbors.pack(side=tk.LEFT)
+        self.mnEntry = tk.Entry(self.minNeighbors_frame, width=12)
+        self.mnEntry.pack(side=tk.LEFT, padx=5)  
+        self.mnEntry.insert(0, "3") #初期値。
+        self.lbl_minNeighborsRange = tk.Label(self.minNeighbors_frame, text="[0 - 6]", width=8 ,anchor="e")
+        self.lbl_minNeighborsRange.pack(side=tk.LEFT)
+        
+        
         
         
 

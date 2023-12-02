@@ -1,0 +1,22 @@
+■サンプル作成
+opencv_createsamples.exe -img ./ok/OK1.png -vec test.vec -num 1000 -maxidev 40 -maxxangle 0.8 -maxyangle 0.8 -maxzangle 0.5
+opencv_createsamples.exe -img ./ok/OK1.png -num 1000 -vec test.vec
+
+opencv_createsamples.exe -img ./ok/OK1.png -num 1000 -vec ./vec/pos_1.vec
+opencv_createsamples.exe -img ./ok/OK2.png -num 1000 -vec ./vec/pos_2.vec
+opencv_createsamples.exe -img ./ok/OK3.png -num 1000 -vec ./vec/pos_3.vec
+opencv_createsamples.exe -img ./ok/OK4.png -num 1000 -vec ./vec/pos_4.vec
+opencv_createsamples.exe -img ./ok/OK5.png -num 1000 -vec ./vec/pos_5.vec
+opencv_createsamples.exe -img ./ok/OK6.png -num 1000 -vec ./vec/pos_6.vec
+opencv_createsamples.exe -img ./ok/OK7.png -num 1000 -vec ./vec/pos_7.vec
+
+上記をまとめて実施してくれる。
+C:\work\ImgCap\data\training
+creates_ALL.py
+
+
+■学習
+opencv_traincascade.exe -data ./cascade/ -vec ./test.vec -bg ./ng/nglist.txt -numPos 800 -numNeg 19
+
+
+opencv_traincascade.exe -data ./cascade/ -vec ./pos.vec -bg ./ng/nglist.txt -numPos 5000 -numNeg 19
