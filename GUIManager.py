@@ -4,16 +4,17 @@ from tkinter import ttk
 from tkinter import filedialog
 
 class GUIManager:
-    def __init__(self, window, controller):
+    def __init__(self, window, controller, dobotManager):
         self.window = window
         self.camera_controller = controller
-        self.apply_detect = False
-        self.apply_DispFeature = False
-        self.reference_image_path = None
-        self.current_image = None
+        self.dobotManager = dobotManager
         self.auto_exposure_var = tk.IntVar(value=1)
         self.auto_wh_var = tk.IntVar(value=1) 
         self.auto_focus_var = tk.IntVar(value=1)
+        self.apply_detect = False
+        self.current_image = None
+        self.center_x = None
+        self.center_y = None
         self.createCanvas()
         self.createButtons()
         
@@ -36,15 +37,14 @@ class GUIManager:
 
         self.btn_settings = tk.Button(self.btn_frame, text="Settings", width=10, command=self.open_settings)
         self.btn_settings.pack(side=tk.LEFT, padx=5)
-        
+     
         self.btn_sift = tk.Button(self.window, text="Object Detection", width=15, command=self.toggle_detect)
         self.btn_sift.pack(pady=20, side=tk.RIGHT, padx=5)
+     
+        self.btn_auto = tk.Button(self.window, text="Auto", width=10, command=self.auto_detect)
+        self.btn_auto.pack(pady=20, side=tk.RIGHT, padx=5)   
+       
         
-        self.btn_snapshot = tk.Button(self.window, text="Disp. Feature Point", width=15, command=self.toggle_DispFeature)
-        self.btn_snapshot.pack(pady=20, side=tk.RIGHT, padx=5)
-        
-        self.btn_snapshot = tk.Button(self.window, text="Snapshot", width=10, command=self.snapshot)
-        self.btn_snapshot.pack(pady=20, side=tk.RIGHT, padx=5)
     
     # def updateCanvas(self):
     
@@ -54,16 +54,6 @@ class GUIManager:
     def close_camera(self):
         self.camera_controller.disconnect()
         self.canvas.delete(self.current_image)
-
-    def toggle_detect(self):
-        self.apply_detect = not self.apply_detect
-        
-    def toggle_DispFeature(self):
-        self.apply_DispFeature = not self.apply_DispFeature
-
-    def snapshot(self):
-        self.camera_controller.snapshot()
-
 
     def open_settings(self):
         settings_dialog = tk.Toplevel(self.window)
@@ -112,67 +102,92 @@ class GUIManager:
         self.btn_auto_focus_off = tk.Button(self.auto_focus_frame, text="Off", width=8, relief=tk.RAISED, command=self.set_auto_focus_off)
         self.btn_auto_focus_off.pack(side=tk.LEFT, padx=5)
         
-        # 検出アルゴリズム。
-        self.algo_frame = tk.Frame(settings_dialog)
-        self.algo_frame.pack(pady=10, anchor=tk.W)
         
-        self.lbl_algorithm = tk.Label(self.algo_frame, text="Detection Algorithm : ", width=20 ,anchor="e")
-        self.lbl_algorithm.pack(side=tk.LEFT)
-        self.algorithm_combobox = ttk.Combobox(self.algo_frame, values=["SIFT", "Canny", "Cascade(Face)", "Cascade(PushPin)", "findContours"])
-        self.algorithm_combobox.set("SIFT")  # 初期値
-        self.algorithm_combobox.pack(side=tk.LEFT, padx=5)
-        
-        # 検出対象画像入力。
-        self.SelectImg_frame = tk.Frame(settings_dialog)
-        self.SelectImg_frame.pack(pady=10, anchor=tk.W)
-        
-        self.lbl_select_Image = tk.Label(self.SelectImg_frame, text="" , width=20 ,anchor="e")
-        self.lbl_select_Image.pack(side=tk.LEFT)
-        
-        self.btn_select_Image = tk.Button(self.SelectImg_frame, text="Select Image", width=10, command=self.select_image)
-        self.btn_select_Image.pack(side=tk.LEFT, padx=5)
-        
-        # 二値化閾値を調整するためのスライダーを作成
-        self.scale_frame = tk.Frame(settings_dialog)
-        self.scale_frame.pack(pady=10, anchor=tk.W)        
-        self.lbl_Threshold = tk.Label(self.scale_frame, text="Binarization Threshold : ", width=20 ,anchor="e")
-        self.lbl_Threshold.pack(side=tk.LEFT)
-        self.threshold_scale = tk.Scale(self.scale_frame, from_=0, to=255, orient="horizontal")
-        self.threshold_scale.set(127)  # デフォルトの閾値を設定
-        self.threshold_scale.pack(side=tk.LEFT, padx=5)
-        
-         # Cascade分類器の設定項目
-        self.cascadeSetting_frame = tk.Frame(settings_dialog)
-        self.cascadeSetting_frame.pack(pady=10, anchor=tk.W)  
-        self.lbl_CascadeSetting= tk.Label(self.cascadeSetting_frame, text="CascadeClassifier Settings ==================", width=42 ,anchor="e")
-        self.lbl_CascadeSetting.pack(side=tk.LEFT)
+        # Manual操作の設定項目
+        self.manualSetting_frame = tk.Frame(settings_dialog)
+        self.manualSetting_frame.pack(pady=10, anchor=tk.W)  
+        self.lbl_ManualSetting= tk.Label(self.manualSetting_frame, text="Manual Detect Settings ==================", width=42 ,anchor="e")
+        self.lbl_ManualSetting.pack(side=tk.LEFT)
  
-         # scaleFactor設定
-        self.scaleFactor_frame = tk.Frame(settings_dialog)
-        self.scaleFactor_frame.pack(pady=10, anchor=tk.W)        
-        self.lbl_scaleFactor = tk.Label(self.scaleFactor_frame, text="scaleFactor : ", width=20 ,anchor="e")
-        self.lbl_scaleFactor.pack(side=tk.LEFT)
-        self.sfEntry = tk.Entry(self.scaleFactor_frame, width=12)
-        self.sfEntry.pack(side=tk.LEFT, padx=5)  
-        self.sfEntry.insert(0, "1.1") #初期値。
-        self.lbl_scaleFactorRange = tk.Label(self.scaleFactor_frame, text="[1.1 - 1.5]", width=8 ,anchor="e")
-        self.lbl_scaleFactorRange.pack(side=tk.LEFT)
-        
-         # minNeighbors設定
-        self.minNeighbors_frame = tk.Frame(settings_dialog)
-        self.minNeighbors_frame.pack(pady=10, anchor=tk.W)        
-        self.lbl_minNeighbors = tk.Label(self.minNeighbors_frame, text="minNeighbors : ", width=20 ,anchor="e")
-        self.lbl_minNeighbors.pack(side=tk.LEFT)
-        self.mnEntry = tk.Entry(self.minNeighbors_frame, width=12)
-        self.mnEntry.pack(side=tk.LEFT, padx=5)  
-        self.mnEntry.insert(0, "3") #初期値。
-        self.lbl_minNeighborsRange = tk.Label(self.minNeighbors_frame, text="[0 - 6]", width=8 ,anchor="e")
-        self.lbl_minNeighborsRange.pack(side=tk.LEFT)
-        
-        
-        
-        
+        # 移動先座標X設定
+        self.DestX_frame = tk.Frame(settings_dialog)
+        self.DestX_frame.pack(pady=10, anchor=tk.W)        
+        self.lbl_DestX = tk.Label(self.DestX_frame, text="Dest. X Coordinate : ", width=20 ,anchor="e")
+        self.lbl_DestX.pack(side=tk.LEFT)
+        self.destXEntry = tk.Entry(self.DestX_frame, width=12)
+        self.destXEntry.pack(side=tk.LEFT, padx=5)  
+        self.destXEntry.insert(0, "170") #初期値。
 
+        # 移動先座標Y設定
+        self.DestY_frame = tk.Frame(settings_dialog)
+        self.DestY_frame.pack(pady=10, anchor=tk.W)        
+        self.lbl_DestY = tk.Label(self.DestY_frame, text="Dest. Y Coordinate : ", width=20 ,anchor="e")
+        self.lbl_DestY.pack(side=tk.LEFT)
+        self.destYEntry = tk.Entry(self.DestY_frame, width=12)
+        self.destYEntry.pack(side=tk.LEFT, padx=5)  
+        self.destYEntry.insert(0, "-120") #初期値。
+        
+        # 移動先座標Z設定
+        self.DestZ_frame = tk.Frame(settings_dialog)
+        self.DestZ_frame.pack(pady=10, anchor=tk.W)        
+        self.lbl_DestZ = tk.Label(self.DestZ_frame, text="Dest. Z Coordinate : ", width=20 ,anchor="e")
+        self.lbl_DestZ.pack(side=tk.LEFT)
+        self.destZEntry = tk.Entry(self.DestZ_frame, width=12)
+        self.destZEntry.pack(side=tk.LEFT, padx=5)  
+        self.destZEntry.insert(0, "20") #初期値。
+        
+        # グリッパー回転量設定
+        self.Rot_frame = tk.Frame(settings_dialog)
+        self.Rot_frame.pack(pady=10, anchor=tk.W)        
+        self.lbl_Rot = tk.Label(self.Rot_frame, text="Gripper Rotation : ", width=20 ,anchor="e")
+        self.lbl_Rot.pack(side=tk.LEFT)
+        self.rotEntry = tk.Entry(self.Rot_frame, width=12)
+        self.rotEntry.pack(side=tk.LEFT, padx=5)  
+        self.rotEntry.insert(0, "-35") #初期値。
+        
+        # 移動ボタン。
+        self.MoveImg_frame = tk.Frame(settings_dialog)
+        self.MoveImg_frame.pack(pady=10, anchor=tk.W)
+        
+        self.lbl_Move_Image = tk.Label(self.MoveImg_frame, text="" , width=20 ,anchor="e")
+        self.lbl_Move_Image.pack(side=tk.LEFT)
+        
+        self.btn_Move_Image = tk.Button(self.MoveImg_frame, text="Move", width=10, command=self.move)
+        self.btn_Move_Image.pack(side=tk.LEFT, padx=5)
+        
+        # 掴むボタン。
+        self.GripImg_frame = tk.Frame(settings_dialog)
+        self.GripImg_frame.pack(pady=10, anchor=tk.W)
+        
+        self.lbl_Grip_Image = tk.Label(self.GripImg_frame, text="Gripper Action : " , width=20 ,anchor="e")
+        self.lbl_Grip_Image.pack(side=tk.LEFT)
+        
+        self.btn_Grip_Image = tk.Button(self.GripImg_frame, text="Grip", width=10, command=self.grip)
+        self.btn_Grip_Image.pack(side=tk.LEFT, padx=5)
+        
+        # 離すボタン。             
+        self.btn_Release_Image = tk.Button(self.GripImg_frame, text="Release", width=10, command=self.release)
+        self.btn_Release_Image.pack(side=tk.LEFT, padx=5)
+        
+    def toggle_detect(self):
+        self.apply_detect = not self.apply_detect
+        
+    def auto_detect(self):
+        self.dobotManager.auto_detect()
+        return
+        
+    def move(self):
+        self.dobotManager.move()
+        return 
+    
+    def grip(self):
+        self.dobotManager.grip()
+        return 
+        
+    def release(self):
+        self.dobotManager.release()
+        return 
+    
     # 自動露光設定。
     def set_auto_exposure_on(self):
         if self.auto_exposure_var.get() == 0:
@@ -218,5 +233,4 @@ class GUIManager:
             self.btn_auto_focus_on.config(relief=tk.RAISED)
             self.btn_auto_focus_off.config(relief=tk.SUNKEN)
             
-    def select_image(self):
-        self.reference_image_path = filedialog.askopenfilename()
+

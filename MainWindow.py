@@ -5,7 +5,8 @@ from tkinter import filedialog
 from PIL import Image, ImageTk
 from Controller import CameraController
 from ImageProcessor import ImageProcessor
-from GUIManager import GUIManager   
+from GUIManager import GUIManager
+from DobotManager import DobotManager
 
 class MainWindow:
     def __init__(self, window, window_title):
@@ -18,9 +19,14 @@ class MainWindow:
     def setUp(self):
         # カメラ制御クラス
         self.camera_controller = CameraController()
-               
+        
+        # Dobot動作管理クラス
+        self.DobotManager = DobotManager()
+        
         # TKinterなどの部品を制御するクラス
-        self.GUIManager = GUIManager(self.window, self.camera_controller)
+        self.GUIManager = GUIManager(self.window, self.camera_controller, self.DobotManager)
+        
+        self.DobotManager.GUIManager = self.GUIManager
         
         # 画像処理クラス
         self.ImgProc = ImageProcessor(self.GUIManager)
@@ -40,13 +46,11 @@ class MainWindow:
         self.window.after(10, self.update)
 
     def exec_Img_Proc(self, frame):
-        # 特徴点表示設定時。
-        if self.GUIManager.apply_DispFeature:
-            return self.ImgProc.display_feature_points(frame)
-            
+
         # 物体検知設定時。
         if self.GUIManager.apply_detect:
              return self.ImgProc.detect_object(frame)
+        
         return frame
 
     def __del__(self):

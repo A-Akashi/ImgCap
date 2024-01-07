@@ -23,7 +23,3 @@ class CameraController:
         ret, frame = self.vid.read()
         return ret, frame
 
-    def snapshot(self):
-        ret, frame = self.vid.read()
-        if ret:
-            cv2.imwrite("snapshot.png", frame)
