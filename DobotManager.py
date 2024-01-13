@@ -2,6 +2,9 @@ from DobotDriver.DobotWrapper import DobotWrapper
 import socket
 import threading
 import time
+import cv2
+import numpy as np
+
 
 
 class DobotManager:
@@ -9,6 +12,17 @@ class DobotManager:
         self.host = '127.0.0.1'
         self.port = 12345
         self.client_socket = self.create_socket()
+        
+        # Dobot上の対応点
+        #dobot_points = np.array([[x1, y1] , [x2, y2]  , [x3, y3]  , [x4, y4]], dtype=np.float32)
+        dobot_points = np.array([[217, -50], [155, -30], [150, 40], [210, 36]], dtype=np.float32)
+
+        # カメラ画像上の対応点
+        #camera_points = np.array([[u1, v1] , [u2, v2]  , [u3, v3]  , [u4, v4]], dtype=np.float32)
+        camera_points = np.array([[132, 300], [182, 176], [324, 177], [319, 291]], dtype=np.float32)
+        
+        # 変換行列の作成
+        self.transformation_matrix = cv2.getPerspectiveTransform(camera_points, dobot_points)
         return
 
     def create_socket(self):
@@ -59,6 +73,7 @@ class DobotManager:
             print(f"Received response: {data.decode()}")
         
         threading.Thread(target=run_in_Tread_grip, args=()).start()
+        
         return 
     
     
@@ -72,6 +87,7 @@ class DobotManager:
             print(f"Received response: {data.decode()}")
         
         threading.Thread(target=run_in_Tread_release, args=()).start()
+        
         return
     
 
@@ -128,17 +144,16 @@ class DobotManager:
 
 
 
-    def convert_dobot_coordinate(self, x, y):
+    def convert_dobot_coordinate(self, image_x, image_y):
                
         # カメラ座標 → Dobot座標に変換
         # (image_x, image_y)がyoloのバウンディングボックスの中心座標
         # (dobot_x, dobot_y)がmove関数に渡す座標
-        image_x, image_y = 122, 122
         image_point = np.array([[image_x, image_y]], dtype=np.float32)
-        dobot_point = cv2.perspectiveTransform(image_point.reshape(-1, 1, 2), transformation_matrix)
+        dobot_point = cv2.perspectiveTransform(image_point.reshape(-1, 1, 2), self.transformation_matrix)
         dobot_x, dobot_y = dobot_point[0][0]
         print(dobot_x, dobot_y)
         
-        return dobot_x , dobot_y
+        return int(dobot_x) , int(dobot_y)
 
 
