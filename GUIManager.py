@@ -102,6 +102,15 @@ class GUIManager:
         self.btn_auto_focus_off = tk.Button(self.auto_focus_frame, text="Off", width=8, relief=tk.RAISED, command=self.set_auto_focus_off)
         self.btn_auto_focus_off.pack(side=tk.LEFT, padx=5)
         
+        # 二値化閾値を調整するためのスライダーを作成
+        self.scale_frame = tk.Frame(settings_dialog)
+        self.scale_frame.pack(pady=10, anchor=tk.W)        
+        self.lbl_Threshold = tk.Label(self.scale_frame, text="Binarization Threshold : ", width=20 ,anchor="e")
+        self.lbl_Threshold.pack(side=tk.LEFT)
+        self.threshold_scale = tk.Scale(self.scale_frame, from_=0, to=255, orient="horizontal")
+        self.threshold_scale.set(136)  # デフォルトの閾値を設定
+        self.threshold_scale.pack(side=tk.LEFT, padx=5)
+        
         
         # Manual操作の設定項目
         self.manualSetting_frame = tk.Frame(settings_dialog)
