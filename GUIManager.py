@@ -102,13 +102,24 @@ class GUIManager:
         self.btn_auto_focus_off = tk.Button(self.auto_focus_frame, text="Off", width=8, relief=tk.RAISED, command=self.set_auto_focus_off)
         self.btn_auto_focus_off.pack(side=tk.LEFT, padx=5)
         
+        # 二値化オプション設定(THRESH設定)。
+        self.bin_opt_frame = tk.Frame(settings_dialog)
+        self.bin_opt_frame.pack(pady=10, anchor=tk.W)
+        
+        self.lbl_bin_opt = tk.Label(self.bin_opt_frame, text="Binarization Option : ", width=20 ,anchor="e")
+        self.lbl_bin_opt.pack(side=tk.LEFT)
+        self.bin_opt_combobox = ttk.Combobox(self.bin_opt_frame, values=["THRESH_BINARY", "THRESH_BINARY_INV", "THRESH_TRUNC", "THRESH_TOZERO", "THRESH_TOZERO_INV"])
+        self.bin_opt_combobox.set("THRESH_BINARY_INV")  # 初期値
+        self.bin_opt_combobox.pack(side=tk.LEFT, padx=5)
+        
+        
         # 二値化閾値を調整するためのスライダーを作成
         self.scale_frame = tk.Frame(settings_dialog)
         self.scale_frame.pack(pady=10, anchor=tk.W)        
         self.lbl_Threshold = tk.Label(self.scale_frame, text="Binarization Threshold : ", width=20 ,anchor="e")
         self.lbl_Threshold.pack(side=tk.LEFT)
         self.threshold_scale = tk.Scale(self.scale_frame, from_=0, to=255, orient="horizontal")
-        self.threshold_scale.set(136)  # デフォルトの閾値を設定
+        self.threshold_scale.set(126)  # デフォルトの閾値を設定
         self.threshold_scale.pack(side=tk.LEFT, padx=5)
         
         

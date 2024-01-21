@@ -33,21 +33,21 @@ class ImageProcessor:
                 self.GUIManager.center_x = center_x
                 self.GUIManager.center_y = center_y
                                
+                print(f"frame.shape : {frame.shape} ")
                 
                 # 角度の算出
                 x1, y1, x2, y2 = map(int, box.xyxy[0])
                 # バウンディングボックス内の画像を切り出し
-                cropped_frame = frame[y1-10:y2+10, x1-10:x2+10]
+                cropped_frame = frame[max(y1-10, 0):min(y2+10, frame.shape[0]), max(x1-10, 0):min(x2+10, frame.shape[1])]
                 copy_frame = cropped_frame.copy()
-
-                # バウンディングボックス内の画像で輪郭検出
-                # 緑成分だけを抽出
-                #green_channel = cropped_frame[:, :, 1]
-                # 2値化
-                #_, img_trans = cv2.threshold(green_channel, self.GUIManager.threshold_scale.get(), 255, cv2.THRESH_BINARY_INV)
+                print(f"x1 : {x1} ")
+                print(f"y1 : {y1} ")
+                print(f"x2 : {x2} ")
+                print(f"y2 : {y2} ")
+                print(cropped_frame)
                 
                 gray = cv2.cvtColor(cropped_frame, cv2.COLOR_BGR2GRAY)
-                _,img_trans = cv2.threshold(gray, self.GUIManager.threshold_scale.get(), 255, cv2.THRESH_BINARY_INV)
+                _,img_trans = cv2.threshold(gray, self.GUIManager.threshold_scale.get(), 255, self.convert_THRESH_BINARY())
                 cv2.imshow('before',img_trans)
                 
                 
@@ -66,7 +66,7 @@ class ImageProcessor:
                 
                 if contours :
                     # 最大面積の矩形を取得し、角度を計算
-                    max_area = 0
+                    max_area = -1
                     max_contour = None
                     for contour in contours:
                         area = cv2.contourArea(contour)
@@ -91,3 +91,16 @@ class ImageProcessor:
         
         return result[0].plot()
     
+    def convert_THRESH_BINARY (self) :
+        
+        if (self.GUIManager.bin_opt_combobox.get() == "THRESH_BINARY") :
+            return cv2.THRESH_BINARY
+        elif (self.GUIManager.bin_opt_combobox.get() == "THRESH_BINARY_INV") :
+            return cv2.THRESH_BINARY_INV
+        elif (self.GUIManager.bin_opt_combobox.get() == "THRESH_TRUNC") :
+            return cv2.THRESH_TRUNC
+        elif (self.GUIManager.bin_opt_combobox.get() == "THRESH_TOZERO") :
+            return cv2.THRESH_TOZERO
+        elif (self.GUIManager.bin_opt_combobox.get() == "THRESH_TOZERO_INV") :
+            return cv2.THRESH_TOZERO_INV
+        return cv2.THRESH_BINARY_INV
