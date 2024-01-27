@@ -29,7 +29,7 @@ class MainWindow:
         self.DobotManager.GUIManager = self.GUIManager
         
         # 画像処理クラス
-        self.ImgProc = ImageProcessor(self.GUIManager)
+        self.ImgProc = ImageProcessor(self.GUIManager, self.DobotManager)
        
 
     def update(self):

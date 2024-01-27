@@ -9,17 +9,18 @@ import numpy as np
 
 class DobotManager:
     def __init__(self):
+        self.duringAutoSeq = False
         self.host = '127.0.0.1'
         self.port = 12345
         self.client_socket = self.create_socket()
         
         # Dobot上の対応点
         #dobot_points = np.array([[x1, y1] , [x2, y2]  , [x3, y3]  , [x4, y4]], dtype=np.float32)
-        dobot_points = np.array([[217, -50], [155, -30], [150, 40], [210, 36]], dtype=np.float32)
+        dobot_points = np.array([[190, -15], [245, -10], [220, 65], [145, 60]], dtype=np.float32)
 
         # カメラ画像上の対応点
         #camera_points = np.array([[u1, v1] , [u2, v2]  , [u3, v3]  , [u4, v4]], dtype=np.float32)
-        camera_points = np.array([[132, 300], [182, 176], [324, 177], [319, 291]], dtype=np.float32)
+        camera_points = np.array([[152, 179], [134, 306], [311, 280], [319, 133]], dtype=np.float32)
         
         # 変換行列の作成
         self.transformation_matrix = cv2.getPerspectiveTransform(camera_points, dobot_points)
@@ -92,6 +93,8 @@ class DobotManager:
     
 
     def auto_detect(self):
+        # AutoによるDobotアーム処理中に設定。
+        self.duringAutoSeq = True
 
         # 検知座標取得
         ImgPosX = self.GUIManager.center_x
@@ -107,7 +110,7 @@ class DobotManager:
     def auto_sequence(self, DobotPosX, DobotPosY) :
         
         # 対象座標へ移動
-        self.moveXYZ(DobotPosX, DobotPosY, -30, 0)
+        self.moveXYZ(DobotPosX, DobotPosY, -24, -35)
         
         time.sleep(0.5)
         
@@ -120,10 +123,14 @@ class DobotManager:
         
         time.sleep(1)
         
-        # 物体を移動
-        moveY = DobotPosY + 100
         
-        message = f"move|{DobotPosX}|{moveY}|{20}|{0}"
+        # 上に持ち上げる
+        self.moveXYZ(DobotPosX, DobotPosY, 20, -35)
+        
+        # 物体を移動       
+        destX, destY = self.get_destination_pos()
+        
+        message = f"move|{destX}|{destY}|{20}|{-35}"
         
         self.client_socket.sendall(message.encode())
 
@@ -140,20 +147,37 @@ class DobotManager:
         data = self.client_socket.recv(1024)
         print(f"Received response: {data.decode()}")
         
+        # AutoによるDobotアーム停止中に設定。
+        self.duringAutoSeq = False
+        
         return
 
 
-
+    # カメラ座標 → Dobot座標に変換
+    # (image_x, image_y)がyoloのバウンディングボックスの中心座標
+    # (dobot_x, dobot_y)がmove関数に渡す座標
     def convert_dobot_coordinate(self, image_x, image_y):
-               
-        # カメラ座標 → Dobot座標に変換
-        # (image_x, image_y)がyoloのバウンディングボックスの中心座標
-        # (dobot_x, dobot_y)がmove関数に渡す座標
         image_point = np.array([[image_x, image_y]], dtype=np.float32)
         dobot_point = cv2.perspectiveTransform(image_point.reshape(-1, 1, 2), self.transformation_matrix)
         dobot_x, dobot_y = dobot_point[0][0]
         print(dobot_x, dobot_y)
         
         return int(dobot_x) , int(dobot_y)
+    
+    # 検知した物体のラベルから格納先の座標を返す
+    def get_destination_pos(self) :
+        destX = None
+        destY = None
+        
+        # 画鋲A
+        if self.bboxlabel == 0 :
+          destX = 95
+          destY = 185
+        # 画鋲B
+        elif self.bboxlabel == 1 :
+          destX = 160
+          destY = 190    
+        
+        return destX, destY
 
 
