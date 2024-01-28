@@ -30,9 +30,9 @@ class ImageProcessor:
                     self.DobotManager.bboxlabel = int(class_id.item())
                     
                     # バウンディングボックスの幅、高さ取得
-                    x, y, width, height = box.xywh[0]
-                    print(f"BBox width : {width} ")
-                    print(f"BBox height : {height} ")
+                    x, y, BBox_width, BBox_height = box.xywh[0]
+                    print(f"BBox width : {BBox_width} ")
+                    print(f"BBox height : {BBox_height} ")
                     
                     x_min, y_min, x_max, y_max = box.xyxy[0]
                     
@@ -44,7 +44,15 @@ class ImageProcessor:
                     print(f"center_y : {center_y} ")
                     self.GUIManager.center_x = center_x
                     self.GUIManager.center_y = center_y
-                                
+                          
+                    # バウンディングボックスの幅、高さから物体のアームの回転量を決定する
+                    arm_rotation = self.get_rotation(box, frame, BBox_width, BBox_height)
+                    print(f"arm_rotation : {arm_rotation} ")
+                    self.DobotManager.rotation = arm_rotation
+                    
+                    
+                          
+                    """            
                     #print(f"frame.shape : {frame.shape} ")
                     
                     # 角度の算出
@@ -96,6 +104,7 @@ class ImageProcessor:
                         #cv2.imshow('drawContours',copy_frame)
                         #print(f"angle : {angle} ")
                         self.GUIManager.angle = angle
+                    """
             else:
                 self.GUIManager.center_x = None
                 self.GUIManager.center_y = None
@@ -117,3 +126,72 @@ class ImageProcessor:
         elif (self.GUIManager.bin_opt_combobox.get() == "THRESH_TOZERO_INV") :
             return cv2.THRESH_TOZERO_INV
         return cv2.THRESH_BINARY_INV
+    
+    def get_rotation(self, box, frame, BBox_width, BBox_height) :
+        
+        isSquare = self.is_almost_square(BBox_width, BBox_height)
+        arm_rotation = -35
+        
+        if isSquare :
+            # 斜め方向の向きが不明のため、45度ずらして再度判定する。
+            x1, y1, x2, y2 = map(int, box.xyxy[0])
+            
+            cv2.imshow('before',frame)
+            
+            # 画像の中心座標を取得
+            (h, w) = frame.shape[:2]
+            (cX, cY) = (w // 2, h // 2)
+            
+            # 45度回転するためのアフィン変換行列を取得
+            M = cv2.getRotationMatrix2D((cX, cY), 45, 1.0)
+            
+            # アフィン変換を適用
+            rotated = cv2.warpAffine(frame, M, (w, h))
+            
+            cv2.imshow('Rotated Image', rotated)
+            
+            result = self.model.predict(rotated)
+            cv2.imshow('after',result[0].plot())
+            
+            for box in result[0].boxes:
+                # バウンディングボックスの幅、高さ取得
+                x, y, BBox_width, BBox_height = box.xywh[0]
+
+                # 縦、横を判定してアームの回転量を設定。
+                if BBox_width < BBox_height :
+                    # 縦方向の場合、右斜め方向にアームの角度を合わせる
+                    arm_rotation = -80 
+                else :
+                    # 横方向の場合、左斜め方向にアームの角度を合わせる
+                    arm_rotation = -10
+                
+            
+        else :
+            # 縦、横を判定してアームの回転量を設定。
+            if BBox_width < BBox_height :
+                # 縦方向
+                arm_rotation = -35 
+            else :
+                # 横方向
+                arm_rotation = -125
+            
+        return arm_rotation
+    
+    
+    def is_almost_square(self, width, height, threshold=0.2):
+        """
+        縦と横の長さがほぼ等しいかどうかを判定する。
+
+        :param width: 図形の横の長さ
+        :param height: 図形の縦の長さ
+        :param threshold: 許容する比率の差の最大値（デフォルトは20%）
+        :return: ほぼ正方形ならTrue、そうでなければFalse
+        """
+        # 縦と横の長さの大きい方と小さい方を取得
+        longer, shorter = max(width, height), min(width, height)
+        
+        # 長辺に対する短辺の比率を計算
+        ratio = shorter / longer
+        
+        # 比率が1からの差が閾値以下であればほぼ正方形と判定
+        return (1 - ratio) <= threshold

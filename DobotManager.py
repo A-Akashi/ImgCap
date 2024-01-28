@@ -10,6 +10,7 @@ import numpy as np
 class DobotManager:
     def __init__(self):
         self.duringAutoSeq = False
+        self.rotation = -35
         self.host = '127.0.0.1'
         self.port = 12345
         self.client_socket = self.create_socket()
@@ -110,7 +111,7 @@ class DobotManager:
     def auto_sequence(self, DobotPosX, DobotPosY) :
         
         # 対象座標へ移動
-        self.moveXYZ(DobotPosX, DobotPosY, -24, -35)
+        self.moveXYZ(DobotPosX, DobotPosY, -24, self.rotation)
         
         time.sleep(0.5)
         
@@ -125,7 +126,7 @@ class DobotManager:
         
         
         # 上に持ち上げる
-        self.moveXYZ(DobotPosX, DobotPosY, 20, -35)
+        self.moveXYZ(DobotPosX, DobotPosY, 20, self.rotation)
         
         # 物体を移動       
         destX, destY = self.get_destination_pos()
@@ -166,8 +167,8 @@ class DobotManager:
     
     # 検知した物体のラベルから格納先の座標を返す
     def get_destination_pos(self) :
-        destX = None
-        destY = None
+        destX = 0
+        destY = 0
         
         # 画鋲A
         if self.bboxlabel == 0 :
