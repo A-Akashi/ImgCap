@@ -17,11 +17,11 @@ class DobotManager:
         
         # Dobot上の対応点
         #dobot_points = np.array([[x1, y1] , [x2, y2]  , [x3, y3]  , [x4, y4]], dtype=np.float32)
-        dobot_points = np.array([[190, -15], [245, -10], [220, 65], [145, 60]], dtype=np.float32)
+        dobot_points = np.array([[150, -20], [240, -37], [135, 105], [240, 105]], dtype=np.float32)
 
         # カメラ画像上の対応点
         #camera_points = np.array([[u1, v1] , [u2, v2]  , [u3, v3]  , [u4, v4]], dtype=np.float32)
-        camera_points = np.array([[152, 179], [134, 306], [311, 280], [319, 133]], dtype=np.float32)
+        camera_points = np.array([[157, 120], [102, 300], [406, 105], [405, 311]], dtype=np.float32)
         
         # 変換行列の作成
         self.transformation_matrix = cv2.getPerspectiveTransform(camera_points, dobot_points)
@@ -177,8 +177,92 @@ class DobotManager:
         # 画鋲B
         elif self.bboxlabel == 1 :
           destX = 160
-          destY = 190    
+          destY = 185    
+        # 画鋲C
+        elif self.bboxlabel == 2 :
+          destX = 210
+          destY = 185
         
         return destX, destY
 
 
+
+    def pop_balloons(self):
+        
+        # 検知座標取得
+        ImgPosX = self.GUIManager.center_x
+        ImgPosY = self.GUIManager.center_y
+        
+        # Dobot座標系へ変換
+        DobotPosX, DobotPosY = self.convert_dobot_coordinate(ImgPosX, ImgPosY) 
+        
+        threading.Thread(target=self.pop_balloon_sequence, args=(DobotPosX, DobotPosY)).start()
+        
+        return
+
+
+    def pop_balloon_sequence(self, DobotPosX, DobotPosY):
+        
+        # 対象座標へ移動
+        self.moveXYZ(DobotPosX, DobotPosY, -10, -35)
+        
+        time.sleep(0.5)
+        
+        # 空圧グリッパーを閉じる
+        message = "grip"
+        self.client_socket.sendall(message.encode())
+
+        data = self.client_socket.recv(1024)
+        print(f"Received response: {data.decode()}")
+        
+        time.sleep(1)
+        
+        
+        # 上に持ち上げる
+        self.moveXYZ(DobotPosX, DobotPosY, 10, -35)       
+        
+        time.sleep(1)
+        
+        
+        # 物体を移動       
+        message = f"move|{140}|{240}|{100}|{-35}"
+        
+        self.client_socket.sendall(message.encode())
+
+        data = self.client_socket.recv(1024)
+        print(f"Received response: {data.decode()}")    
+        
+        time.sleep(1)
+        
+        # アームを降ろして風船を割る。      
+        message = f"move|{140}|{240}|{50}|{-35}"
+        
+        self.client_socket.sendall(message.encode())
+
+        data = self.client_socket.recv(1024)
+        print(f"Received response: {data.decode()}")    
+        
+        time.sleep(1)
+        
+        # 空圧グリッパーを離す
+        message = "release"
+        self.client_socket.sendall(message.encode())
+
+        data = self.client_socket.recv(1024)
+        print(f"Received response: {data.decode()}")
+        
+        
+        return
+    
+    def reset_alarm(self) :
+        
+        def run_in_Tread_reset_alarm() :
+            message = "reset_alarm"
+            self.client_socket.sendall(message.encode())
+
+            data = self.client_socket.recv(1024)
+            print(f"Received response: {data.decode()}")
+        
+        threading.Thread(target=run_in_Tread_reset_alarm, args=()).start()
+        
+        return 

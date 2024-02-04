@@ -136,7 +136,7 @@ class ImageProcessor:
             # 斜め方向の向きが不明のため、45度ずらして再度判定する。
             x1, y1, x2, y2 = map(int, box.xyxy[0])
             
-            cv2.imshow('before',frame)
+            #cv2.imshow('before',frame)
             
             # 画像の中心座標を取得
             (h, w) = frame.shape[:2]
@@ -148,10 +148,10 @@ class ImageProcessor:
             # アフィン変換を適用
             rotated = cv2.warpAffine(frame, M, (w, h))
             
-            cv2.imshow('Rotated Image', rotated)
+            #cv2.imshow('Rotated Image', rotated)
             
             result = self.model.predict(rotated)
-            cv2.imshow('after',result[0].plot())
+            #cv2.imshow('after',result[0].plot())
             
             for box in result[0].boxes:
                 # バウンディングボックスの幅、高さ取得

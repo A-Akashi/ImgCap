@@ -24,9 +24,10 @@ class DobotServer:
                 self.grip()                
             elif (command[0] == "release"):
                 self.release()
-
             elif (command[0] == "move"):
                 self.move(command)
+            elif (command[0] == "reset_alarm"):
+                self.reset_alarm()
 
             client_socket.sendall(b"Command Sequence Finished from the server!")
         
@@ -92,7 +93,10 @@ class DobotServer:
         
         self.dobot.grip(False)
         return 
-        
+    
+    def reset_alarm(self) :
+        self.dobot.reset_alarm()
+        return
         
 
 if __name__ == "__main__":

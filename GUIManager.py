@@ -43,6 +43,10 @@ class GUIManager:
      
         self.btn_auto = tk.Button(self.window, text="Auto", width=10, command=self.auto_detect)
         self.btn_auto.pack(pady=20, side=tk.RIGHT, padx=5)   
+        
+        self.btn_auto = tk.Button(self.window, text="Pop balloons", width=10, command=self.pop_balloons)
+        self.btn_auto.pack(pady=20, side=tk.RIGHT, padx=5)   
+       
        
         
     
@@ -175,6 +179,10 @@ class GUIManager:
         self.btn_Move_Image = tk.Button(self.MoveImg_frame, text="Move", width=10, command=self.move)
         self.btn_Move_Image.pack(side=tk.LEFT, padx=5)
         
+        # アラームリセットボタン。
+        self.btn_Move_Image = tk.Button(self.MoveImg_frame, text="Reset Alarm", width=10, command=self.reset_alarm)
+        self.btn_Move_Image.pack(side=tk.LEFT, padx=5)
+        
         # 掴むボタン。
         self.GripImg_frame = tk.Frame(settings_dialog)
         self.GripImg_frame.pack(pady=10, anchor=tk.W)
@@ -195,9 +203,17 @@ class GUIManager:
     def auto_detect(self):
         self.dobotManager.auto_detect()
         return
+    
+    def pop_balloons(self):
+        self.dobotManager.pop_balloons()
+        return
         
     def move(self):
         self.dobotManager.move()
+        return 
+    
+    def reset_alarm(self):
+        self.dobotManager.reset_alarm()
         return 
     
     def grip(self):
